@@ -206,5 +206,5 @@ CREATE TABLE officer_t
     avg_close_days INTEGER,
 	precinct_code INTEGER,
 	PRIMARY KEY(officer_code)
-);
+);add
 
