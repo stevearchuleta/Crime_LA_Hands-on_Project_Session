@@ -499,6 +499,111 @@ call officer_p();
 call location_p();
 call victim_p();
 
+/*-----------------------------------------------------------------------------------------------------------------------------------
+
+                                               Views Creation
+                                               
+-----------------------------------------------------------------------------------------------------------------------------------*/
+
+-- [6] Creating the views:
+
+-- List of views to be created are "rep_loc_off_v" , "rep_vict_v"
+
+-- Create a view rep_loc_off_v-
+
+DROP VIEW IF EXISTS rep_loc_off_v;
+
+CREATE VIEW rep_loc_off_v AS
+SELECT 
+            r.report_no,
+			r.incident_time,
+			r.complaint_type,
+			r.cctv_flag,
+			r.crime_code,
+            r.case_status_desc,
+            r.case_status_code,
+			r.crime_type,
+            r.week_number,
+			l.area_code,
+			l.area_name,
+			l.cctv_count,
+			l.population_density,
+            o.officer_code,
+            o.precinct_code
+FROM report_t as r
+INNER JOIN location_t as l
+    ON l.area_code = r.area_code
+INNER JOIN officer_t as o
+    ON r.officer_code = o.officer_code;
+
+-- Create a view rep_vict_v-
+
+DROP VIEW IF EXISTS rep_vict_v;
+
+CREATE VIEW rep_vict_v AS
+SELECT 
+			r.report_no,
+	        r.offender_relation,
+            r.incident_time,
+            r.crime_type,
+            v.victim_code,
+			v.victim_age
+FROM report_t as r
+INNER JOIN victim_t as v
+    ON v.victim_code = r.victim_code;
+
+/*-----------------------------------------------------------------------------------------------------------------------------------
+
+                                               Functions Creation
+                                               
+-----------------------------------------------------------------------------------------------------------------------------------*/
+
+-- [7] Creating the functions:
 
 
+-- Create the function age_f
 
+DROP FUNCTION IF EXISTS age_f;
+
+DELIMITER $$  
+CREATE FUNCTION age_f (victim_age varchar(10)) 
+RETURNS varchar(10)
+DETERMINISTIC  
+BEGIN  
+  DECLARE age_category varchar(10);
+		IF (victim_age >= 0) AND (victim_age <= 12) THEN SET age_category = 'Child';
+		ELSEIF (victim_age > 12) AND (victim_age <= 23) THEN SET age_category = 'Teenager';
+		ELSEIF (victim_age > 23) AND (victim_age <= 35) THEN SET age_category = 'Middle-aged';
+		ELSEIF (victim_age > 35) AND (victim_age <= 55) THEN  SET age_category = 'Adults';
+		ELSEIF victim_age > 55 THEN SET age_category = 'Elderly';
+        ELSE SET age_category = 'Unknown';
+  END IF;
+  RETURN age_category;
+END;
+
+
+-- Create the function time_f-
+
+DROP FUNCTION IF EXISTS time_f;
+
+DELIMITER $$  
+CREATE FUNCTION time_f (incident_time TIME) 
+RETURNS VARCHAR(20)
+DETERMINISTIC  
+BEGIN  
+  DECLARE category VARCHAR(20);
+		IF (EXTRACT(HOUR FROM incident_time) >= 0 AND EXTRACT(HOUR FROM incident_time) < 5) THEN SET category = 'Midnight';
+		ELSEIF (EXTRACT(HOUR FROM incident_time) >= 5 AND EXTRACT(HOUR FROM incident_time) < 12) THEN SET category = 'Morning';
+		ELSEIF (EXTRACT(HOUR FROM incident_time) >=12 AND EXTRACT(HOUR FROM incident_time) < 18) THEN SET category = 'Afternoon';
+		ELSEIF (EXTRACT(HOUR FROM incident_time) >= 18 AND EXTRACT(HOUR FROM incident_time) <=21) THEN  SET category = 'Evening';
+		ELSEIF EXTRACT(HOUR FROM incident_time) > 21 THEN SET category = 'Night';
+  END IF;
+  RETURN category;
+END;
+
+
+/*-----------------------------------------------------------------------------------------------------------------------------------
+Note: 
+After creating tables, stored procedures, views and functions, attempt the below questions.
+Once you have got the answer to the below questions, download the csv file for each question and use it in Python for visualisations.
+------------------------------------------------------------------------------------------------------------------------------------ 
